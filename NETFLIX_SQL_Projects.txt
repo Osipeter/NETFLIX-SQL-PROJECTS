@@ -1,5 +1,3 @@
-
-
 1.	Display the total Number of Movies vs TV Shows
 2.	Count the Number of Content Items in Each Genre
 3.	List All Movies Released in a Specific Year (e.g., 2020)
