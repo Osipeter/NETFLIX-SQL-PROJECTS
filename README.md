@@ -327,4 +327,20 @@ WHERE cast(date_added AS DATE) BETWEEN '2021-01-01' AND '2021-12-31'
 
 **Objective:** Identify content items added in 2021.
 
- 
+
+### 17. List movies added in 2021?
+
+```sql
+
+SELECT *
+
+From Netflix_Titles
+
+Where YEAR(Cast(date_added AS DATE)) = 2021 AND TYPE = 'Movie'
+  
+ ```
+
+**Objective:** Identify the movies added in 2021.
+
+
+
