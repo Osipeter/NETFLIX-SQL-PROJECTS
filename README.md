@@ -100,4 +100,48 @@ ORDER BY total_content DESC
  ```
 
 **Objective:** Identify the top 5 countries with the highest number of content items.
+
+
+
+### 5. Find Content Added in the Last 5 Years
+
+```sql
+  
+SELECT * FROM Netflix_Titles
+
+WHERE DATEDIFF(YEAR, date_added, GETDATE()) >= 5
+  
+ ```
+
+**Objective:** Identify the content added in the last 5 years.
+
+
+
+### 6. List All Movies that are Documentaries
+
+```sql
+  
+SELECT * FROM
+(
+	SELECT show_id, Trim(value) Listed_In
+
+	FROM netflix_titles
+
+	CROSS APPLY string_split(Listed_In,',')
+
+) AS ANSWER
+
+WHERE Listed_In = 'Documentaries'
+
+OR
+
+SELECT * FROM Netflix_Titles
+
+WHERE type = 'movie' And Listed_in LIKE '%Documentaries%'
+  
+ ```
+
+**Objective:** Identify the content items that are Documentaries.
+
+
  
