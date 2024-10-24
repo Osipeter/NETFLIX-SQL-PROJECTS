@@ -120,7 +120,9 @@ WHERE DATEDIFF(YEAR, date_added, GETDATE()) >= 5
 ### 6. List All Movies that are Documentaries
 
 ```sql
-  
+
+METHOD-1
+
 SELECT * FROM
 (
 	SELECT show_id, Trim(value) Listed_In
@@ -134,6 +136,7 @@ SELECT * FROM
 WHERE Listed_In = 'Documentaries'
 
 OR
+METHOD-2
 
 SELECT * FROM Netflix_Titles
 
@@ -142,6 +145,92 @@ WHERE type = 'movie' And Listed_in LIKE '%Documentaries%'
  ```
 
 **Objective:** Identify the content items that are Documentaries.
+
+
+### 7. Find All Content Without a Director
+
+```sql
+
+SELECT * FROM Netflix_Titles
+
+WHERE Director is null
+  
+ ```
+
+**Objective:** Identify all content items that do not have directors.
+
+
+### 8. Find How Many Movies Actor 'Salman Khan' Appeared in the Last 10 Years
+
+```sql
+
+SELECT * FROM Netflix_Titles
+
+WHERE type = 'Movie' AND cast LIKE '%Salman Khan%'
+
+AND release_year > YEAR(GETDATE()) - 10
+  
+ ```
+
+**Objective:** Identify content items that the movie actor 'Salman Khan' appeared in the last 10 years.
+
+
+### 9. Find the Top 10 Actors Who Have Appeared in the Highest Number of Movies Produced in India
+
+```sql
+
+SELECT TOP (10) Trim(Value) AS Actor, Count(*) AS Highest
+	
+FROM Netflix_Titles
+
+CROSS APPLY string_split(cast,',')
+
+WHERE country LIKE '%India%' AND type = 'Movie'
+
+GROUP BY Trim(Value)
+
+ORDER BY Count(*) DESC
+  
+ ```
+
+**Objective:** Identify content items that the movie actor 'Salman Khan' appeared in the last 10 years.
+
+
+### 10. Categorize the content based on the presence of the keywords 'kill' and 'violence' in the description field. Label content containing these keywords as 'Bad' and all other content as 'Good'. Count how many items fall into each category?
+
+```sql
+
+
+  
+ ```
+
+**Objective:** Identify content items that the movie actor 'Salman Khan' appeared in the last 10 years.
+
+
+### 11. Identify the Longest Movie?
+
+```sql
+
+SELECT TOP(1)
+
+	title, 
+
+	trim(value) value
+
+FROM netflix_titles
+
+CROSS APPLY STRING_SPLIT(duration,' ',1)
+
+WHERE type = 'Movie' AND ordinal = 1
+
+ORDER BY CAST(value AS INT) DESC
+  
+ ```
+
+**Objective:** Identify content items that the movie actor 'Salman Khan' appeared in the last 10 years.
+
+
+
 
 
  
