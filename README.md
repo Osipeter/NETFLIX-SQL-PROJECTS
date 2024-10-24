@@ -230,7 +230,101 @@ ORDER BY CAST(value AS INT) DESC
 **Objective:** Identify content items that the movie actor 'Salman Khan' appeared in the last 10 years.
 
 
+### 12. Find All Movies/TV Shows by Director 'Rajiv Chilaka'?
+
+```sql
+
+Select * from netflix_titles
+
+WHERE Director LIKE '%Rajiv Chilaka%'
+  
+ ```
+
+**Objective:** Identify content items by Director 'Rajiv Chilaka'.
 
 
+### 13. List All TV Shows with More Than 5 Seasons?
+
+```sql
+
+SELECT title, Type, Trim(value) New_Duration
+
+FROM Netflix_Titles
+
+CROSS APPLY string_split(duration, ' ', 1)
+
+WHERE Type = 'Tv show' AND Ordinal = 1
+
+AND TRY_CAST(value AS INT) > 5
+
+ORDER BY CAST(value AS INT) DESC
+  
+ ```
+
+**Objective:** Identify TV show that are more than 5 seasons.
+
+
+### 14. List content items added after August 20, 2021?
+
+```sql
+
+SELECT * FROM Netflix_Titles
+
+WHERE CAST(date_added AS DATE) >= '2021-08-20'
+  
+ ```
+
+**Objective:** Identify content items added after August 20, 2021.
+
+
+### 15. List movies added to on June 15, 2019?
+
+```sql
+
+SELECT * FROM Netflix_Titles
+
+WHERE type = 'Movie' AND cast(date_added AS DATE) = '2019-06-15'
+  
+ ```
+
+**Objective:** Identify movies added on June 15th 2019.
+
+
+### 16. List content items added in 2021?
+
+```sql
+
+METHOD-1
+
+SELECT *  
+From Netflix_Titles
+
+Where Cast(date_added AS DATE) LIKE '%2021%'
+
+
+METHOD-2
+
+SELECT *  
+From Netflix_Titles
+
+Where date_added LIKE '%2021%'
+
+
+METHOD-3
+
+SELECT * FROM Netflix_Titles
+
+WHERE YEAR(cast(date_added AS DATE)) = 2021
+
+
+METHOD-4
+
+SELECT * FROM Netflix_Titles
+
+WHERE cast(date_added AS DATE) BETWEEN '2021-01-01' AND '2021-12-31'
+  
+ ```
+
+**Objective:** Identify content items added in 2021.
 
  
