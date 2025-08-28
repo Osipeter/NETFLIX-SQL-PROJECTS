@@ -1,5 +1,6 @@
 # Netflix Movies and TV Shows End-to-End Data Analysis Project using SQL
 
+
 <img width="960" height="292" alt="image" src="https://github.com/user-attachments/assets/18a11264-e3ae-4024-b0f6-f00df5def5b7" />
 
 
@@ -26,13 +27,9 @@ Though the dataset for this project is sourced from the Kaggle dataset, but its 
 ```sql
 
 SELECT 
-
    type,
-
    COUNT(*) count_type
-
 FROM netflix_titles
-
 GROUP BY type
 
 ```
@@ -46,13 +43,9 @@ GROUP BY type
   
 SELECT 
 	Trim(Value) AS genre,
-
 	COUNT(*) AS total_content
-
 FROM netflix_titles
-
 CROSS APPLY string_split (listed_in, ',')
-
 GROUP BY Trim(Value);
   
  ```
@@ -65,9 +58,7 @@ GROUP BY Trim(Value);
 ```sql
   
 SELECT *
-
 FROM netflix_titles
-
 WHERE release_year = 2020;
   
  ```
@@ -81,23 +72,15 @@ WHERE release_year = 2020;
   
 SELECT Top(5) * 
 FROM
-(
+	(
 	SELECT
-
 	Trim(Value) AS country,
- 
 	COUNT(*) AS total_content
-
 	FROM netflix_titles
-
 	   CROSS APPLY string_split (country, ',')
-
 	GROUP BY Trim(Value)
-
 ) AS temp
-
 WHERE country IS NOT NULL
-
 ORDER BY total_content DESC
   
  ```
