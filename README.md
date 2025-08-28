@@ -27,10 +27,12 @@ Though the dataset for this project is sourced from the Kaggle dataset, but its 
 ```sql
 
 SELECT 
-   type,
-   COUNT(*) count_type
-FROM netflix_titles
-GROUP BY type
+   	type,
+   	COUNT(*) count_type
+FROM
+	netflix_titles_filter
+GROUP BY
+	type
 
 ```
  
@@ -44,9 +46,10 @@ GROUP BY type
 SELECT 
 	Trim(Value) AS genre,
 	COUNT(*) AS total_content
-FROM netflix_titles
-CROSS APPLY string_split (listed_in, ',')
-GROUP BY Trim(Value);
+FROM netflix_titles_filter
+	CROSS APPLY string_split (listed_in, ',')
+GROUP BY
+	Trim(Value);
   
  ```
 
@@ -57,9 +60,13 @@ GROUP BY Trim(Value);
 
 ```sql
   
-SELECT *
-FROM netflix_titles
-WHERE release_year = 2020;
+SELECT 
+	* 
+FROM 
+	netflix_titles_filter
+WHERE 
+	Type = 'Movie' AND 
+	Release_Year = 2020
   
  ```
 
@@ -70,18 +77,23 @@ WHERE release_year = 2020;
 
 ```sql
   
-SELECT Top(5) * 
+SELECT 
+	Top(5) * 
 FROM
 	(
-	SELECT
-	Trim(Value) AS country,
-	COUNT(*) AS total_content
-	FROM netflix_titles
-	   CROSS APPLY string_split (country, ',')
-	GROUP BY Trim(Value)
-) AS temp
-WHERE country IS NOT NULL
-ORDER BY total_content DESC
+		SELECT 
+		Trim(Value) AS country,
+		COUNT(*) AS total_content  
+		FROM 
+			netflix_titles_filter
+			CROSS APPLY string_split (country, ',') 
+		GROUP BY 
+			Trim(Value) 
+	) AS temp
+WHERE 
+	country <> 'NA'
+ORDER BY 
+	total_content DESC
   
  ```
 
@@ -93,9 +105,12 @@ ORDER BY total_content DESC
 
 ```sql
   
-SELECT * FROM Netflix_Titles
-
-WHERE DATEDIFF(YEAR, date_added, GETDATE()) >= 5
+SELECT 
+	* 
+FROM 
+	netflix_titles_filter
+WHERE 
+	date_added >= DATEADD(Year, -5, GetDate())
   
  ```
 
@@ -107,26 +122,28 @@ WHERE DATEDIFF(YEAR, date_added, GETDATE()) >= 5
 
 ```sql
 
-METHOD-1
+Method 1
 
-SELECT * FROM
-(
-	SELECT show_id, Trim(value) Listed_In
+SELECT 
+	* FROM netflix_titles_filter
+WHERE 
+	Type = 'Movie' AND 
+	Listed_in LIKE '%Documentaries%'
 
-	FROM netflix_titles
 
-	CROSS APPLY string_split(Listed_In,',')
+Method 2
 
-) AS ANSWER
-
-WHERE Listed_In = 'Documentaries'
-
-OR
-METHOD-2
-
-SELECT * FROM Netflix_Titles
-
-WHERE type = 'movie' And Listed_in LIKE '%Documentaries%'
+SELECT 
+	ntf.*, 
+	nli.listed_in 
+FROM 
+	netflix_titles_filter ntf
+JOIN 
+	netflix_listed_in nli
+ON 
+	ntf.show_id = nli.show_id
+WHERE 
+	nli.Listed_in = 'Documentaries'
   
  ```
 
@@ -137,9 +154,31 @@ WHERE type = 'movie' And Listed_in LIKE '%Documentaries%'
 
 ```sql
 
-SELECT * FROM Netflix_Titles
+Director column was replaced with NA
 
-WHERE Director is null
+Method 1
+
+SELECT 
+	* 
+FROM 
+	netflix_titles_filter
+WHERE 
+	director = 'NA'
+
+
+--Method 2
+
+SELECT 
+	ntf.*, 
+	nd.director 
+FROM 
+	netflix_titles_filter ntf
+JOIN 
+	netflix_director nd
+ON 
+	ntf.show_id = nd.show_id
+WHERE 
+	nd.director = 'NA'
   
  ```
 
@@ -150,11 +189,32 @@ WHERE Director is null
 
 ```sql
 
-SELECT * FROM Netflix_Titles
+Method 1
 
-WHERE type = 'Movie' AND cast LIKE '%Salman Khan%'
+SELECT 
+	* 
+FROM 
+	netflix_titles_filter
+WHERE 
+	Type = 'Movie' AND 
+	cast LIKE '%Salman Khan%' AND  
+	release_year > YEAR(GetDate()) - 10
 
-AND release_year > YEAR(GETDATE()) - 10
+
+Method 2
+
+SELECT 
+	ntf.*, 
+	nc.cast 
+FROM 
+	netflix_titles_filter ntf
+JOIN 
+	netflix_cast nc
+ON 
+	ntf.show_id = nc.show_id
+WHERE 
+	nc.cast = 'Salman Khan' AND  
+	ntf.release_year > YEAR(GetDate()) - 10
   
  ```
 
@@ -165,17 +225,42 @@ AND release_year > YEAR(GETDATE()) - 10
 
 ```sql
 
-SELECT TOP (10) Trim(Value) AS Actor, Count(*) AS Highest
-	
-FROM Netflix_Titles
+Method 1
 
-CROSS APPLY string_split(cast,',')
+SELECT 
+	TOP (10)
+	Trim(Value) AS Actor,
+	COUNT(*) HighestNumber
+FROM 
+	netflix_titles_filter
+	CROSS APPLY STRING_SPLIT(cast,',')
+WHERE 
+	country LIKE '%India%' AND 
+	type = 'Movie'
+GROUP BY 
+	Trim(Value)
+Order BY 
+	COUNT(*) DESC
 
-WHERE country LIKE '%India%' AND type = 'Movie'
 
-GROUP BY Trim(Value)
+Method 2
 
-ORDER BY Count(*) DESC
+SELECT 
+	TOP (10) trim(cast) Actor, 
+	Count(*) HighestNumber
+FROM 
+	netflix_titles_filter ntf
+JOIN 
+	netflix_cast nc
+ON 
+	ntf.show_id = nc.show_id
+WHERE 
+	ntf.country = 'India' AND 
+	ntf.type = 'Movie'
+GROUP BY 
+	trim(cast)
+Order BY 
+	COUNT(*) DESC
   
  ```
 
@@ -186,7 +271,43 @@ ORDER BY Count(*) DESC
 
 ```sql
 
+Method 1
 
+SELECT 
+	Category, 
+	Count(*) CategoryCounts
+FROM
+	(
+	SELECT 
+		description,
+		CASE	
+			WHEN description LIKE '%kill%' OR description LIKE '%violence%' THEN 'Bad'
+		ELSE 
+			'Good'
+		END AS Category
+	FROM 
+		Netflix_Titles_Filter
+	)AS CategorizedContents
+GROUP BY 
+	Category
+
+
+
+Method 2
+
+SELECT 
+	CASE
+		WHEN description LIKE '%kill%' OR description LIKE '%violence%' THEN 'Bad'
+		ELSE 'Good'
+	END as Category,
+	Count(*) as TotalCount
+FROM 
+	Netflix_Titles_Filter
+GROUP BY 
+	CASE
+		WHEN description LIKE '%kill%' OR description LIKE '%violence%' THEN 'Bad'
+		ELSE 'Good'
+	END;
   
  ```
 
@@ -197,19 +318,19 @@ ORDER BY Count(*) DESC
 
 ```sql
 
-SELECT TOP(1)
-
-	title, 
-
-	trim(value) value
-
-FROM netflix_titles
-
-CROSS APPLY STRING_SPLIT(duration,' ',1)
-
-WHERE type = 'Movie' AND ordinal = 1
-
-ORDER BY CAST(value AS INT) DESC
+SELECT 
+	TOP 1 Type,
+	Title,
+	Trim(Value) as TotalMunite,
+	Duration
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(duration, ' ', 1)
+WHERE 
+	type = 'Movie' AND 
+	ORDINAL = 1
+ORDER BY 
+	CAST(Trim(Value) AS INT) DESC
   
  ```
 
@@ -220,9 +341,33 @@ ORDER BY CAST(value AS INT) DESC
 
 ```sql
 
-Select * from netflix_titles
+Method 1
 
-WHERE Director LIKE '%Rajiv Chilaka%'
+SELECT 
+	* 
+FROM 
+	netflix_titles_filter
+WHERE 
+	Type IN ('Movie', 'TV Show') AND 
+	Director LIKE '%Rajiv Chilaka%'
+
+
+
+Method 2
+
+SELECT 
+	*, 
+	ntf.type, 
+	nd.director 
+FROM 
+	netflix_titles_filter ntf
+JOIN 
+	netflix_director nd
+ON 
+	ntf.show_id = nd.show_id
+WHERE 
+	ntf.Type = 'Movie' AND 
+	nd.Director = 'Rajiv Chilaka'
   
  ```
 
@@ -233,17 +378,18 @@ WHERE Director LIKE '%Rajiv Chilaka%'
 
 ```sql
 
-SELECT title, Type, Trim(value) New_Duration
-
-FROM Netflix_Titles
-
-CROSS APPLY string_split(duration, ' ', 1)
-
-WHERE Type = 'Tv show' AND Ordinal = 1
-
-AND TRY_CAST(value AS INT) > 5
-
-ORDER BY CAST(value AS INT) DESC
+SELECT
+	Title,
+	TRIM(Value) Season
+FROM
+	netflix_titles_filter
+	CROSS APPLY string_split(duration,' ',1)
+WHERE 
+	type = 'TV Show' and 
+	Ordinal = 1
+	AND TRY_CAST(TRIM(Value) AS INT) > 5
+Order By 
+	CAST(TRIM(Value) AS INT) DESC
   
  ```
 
@@ -254,9 +400,12 @@ ORDER BY CAST(value AS INT) DESC
 
 ```sql
 
-SELECT * FROM Netflix_Titles
-
-WHERE CAST(date_added AS DATE) >= '2021-08-20'
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	date_added > '2021-08-20' 
   
  ```
 
@@ -267,9 +416,13 @@ WHERE CAST(date_added AS DATE) >= '2021-08-20'
 
 ```sql
 
-SELECT * FROM Netflix_Titles
-
-WHERE type = 'Movie' AND cast(date_added AS DATE) = '2019-06-15'
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	type = 'Movie' AND 
+	date_added = '2019-06-15' 
   
  ```
 
@@ -280,34 +433,47 @@ WHERE type = 'Movie' AND cast(date_added AS DATE) = '2019-06-15'
 
 ```sql
 
-METHOD-1
+Method 1
 
-SELECT *  
-From Netflix_Titles
-
-Where Cast(date_added AS DATE) LIKE '%2021%'
-
-
-METHOD-2
-
-SELECT *  
-From Netflix_Titles
-
-Where date_added LIKE '%2021%'
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	date_added >= '2021-01-01' AND 
+	date_added <= '2021-12-31' 
 
 
-METHOD-3
 
-SELECT * FROM Netflix_Titles
+Method 2
 
-WHERE YEAR(cast(date_added AS DATE)) = 2021
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	date_added BETWEEN '2021-01-01' AND '2021-12-31'
 
 
-METHOD-4
 
-SELECT * FROM Netflix_Titles
+Method 3
 
-WHERE cast(date_added AS DATE) BETWEEN '2021-01-01' AND '2021-12-31'
+Select 
+	*  
+From 
+	Netflix_Titles_filter
+Where 
+	date_added LIKE '%2021%'
+
+
+Method 4
+
+SELECT 
+	* 
+From 
+	netflix_titles_filter 
+where 
+	Year(date_added) = 2021
   
  ```
 
@@ -318,15 +484,272 @@ WHERE cast(date_added AS DATE) BETWEEN '2021-01-01' AND '2021-12-31'
 
 ```sql
 
-SELECT *
+Method 1
 
-From Netflix_Titles
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	type = 'Movie' AND 
+	date_added >= '2021-01-01' AND 
+	date_added <= '2021-12-31' 
 
-Where YEAR(Cast(date_added AS DATE)) = 2021 AND TYPE = 'Movie'
+
+
+Method 2
+
+SELECT 
+	* 
+FROM 
+	Netflix_Titles_filter
+WHERE 
+	type = 'Movie' AND  
+	date_added BETWEEN '2021-01-01' AND '2021-12-31'
+
+
+
+Method 3
+
+Select 
+	*  
+From 
+	Netflix_Titles_filter
+Where 
+	type = 'Movie' AND 
+	date_added LIKE '%2021%'
+
+
+
+
+Method 4
+
+Select 
+	*  
+From 
+	Netflix_Titles_filter
+Where 
+	type = 'Movie' AND 
+	Year(date_added) = 2021
   
  ```
 
 **Objective:** Identify the movies added in 2021.
+
+
+
+### 18. Count the number of movies and tv series that each director has produced in different columns?
+
+```sql
+
+SELECT 
+	Trim(value) AS Directors, 
+	Type, Count(*) MovieANDTVShow  
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(director, ',')
+WHERE 
+	type IN('Movie', 'TV Show') AND 
+	Director <> 'NA' 
+GROUP BY 
+	Trim(value), 
+	Type
+  
+ ```
+
+**Objective:** Identify the number of movies and TV shows each director has produced.
+
+
+
+### 19. Which country has the highest number of comedy movies?
+
+```sql
+
+SELECT 
+	TOP 1 Trim(value) All_Country, 
+	Count(*) COMEDIES
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(country, ',')
+WHERE 
+	Type = 'Movie' AND 
+	listed_in LIKE '%comedies%' AND 
+	Trim(value) <> 'NA'
+GROUP BY 
+	Trim(value)
+ORDER BY 
+	Count(*) DESC
+  
+ ```
+
+**Objective:** Identify the country with the highest comedy movies.
+
+
+
+### 20. For each year, which director has the maximum number of movies released?
+
+```sql
+
+SELECT 
+	release_year, 
+	Trim(value) DIRECTOR, 
+	Count(*) MOVIES
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(director, ',')
+WHERE 
+	Type = 'Movie' AND 
+	director <> 'NA'
+GROUP BY 
+	release_year, 
+	Trim(value)
+ORDER BY 
+	Count(*) DESC
+  
+ ```
+
+**Objective:** Identify the Director who has the maximum number of movies released for each year.
+
+
+
+### 21. What is the average running length of movies in each genre?
+
+```sql
+
+SELECT 
+	Type, 
+	Title, 
+	Trim(value) as AVGERAGELEN
+FROM 
+	netflix_titles_filter
+	CROSS APPLY string_split(Duration, ' ', 1)
+WHERE 
+	type = 'Movie' and 
+	Ordinal = 1
+  
+ ```
+
+**Objective:** Identify the average running length of movies in each genre.
+
+
+
+### 22. List directors who have directed both comedies and horror films?
+
+```sql
+
+SELECT 
+	DISTINCT Director, 
+	Trim(value) as ComedyAndHorror
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(Listed_in, ',')
+WHERE 
+	Listed_in LIKE '%Comedies%' AND 
+	Listed_in LIKE '%Horror%' AND 
+	Director <> 'NA'
+GROUP BY 
+	Trim(value), 
+	Director
+HAVING 
+	Trim(value) <> 'Independent Movies' AND 
+	Trim(value) <> 'Sci-Fi & Fantasy' AND 
+	Trim(value) <> 'International Movies' AND 
+	Trim(value) <> 'Action & Adventure' AND 
+	Trim(value) <> 'Cult Movies'
+  
+ ```
+
+**Objective:** Identify the directors who have directed both comedies and horror movies.
+
+
+
+### 23. List the director's name and the number of horror and comedy films that he or she has directed?
+
+```sql
+
+SELECT 
+	Director, 
+	Count(*) MovieNumbers, 
+	Trim(value) as ComedyAndHorror
+FROM 
+	Netflix_Titles_Filter
+	CROSS APPLY string_split(Listed_in, ',')
+WHERE 
+	Listed_in LIKE '%Comedies%' AND 
+	Listed_in LIKE '%Horror%' AND 
+	Director <> 'NA'
+GROUP BY 
+	Trim(value), 
+	Director
+HAVING 
+	Trim(value) <> 'Independent Movies' AND 
+	Trim(value) <> 'Sci-Fi & Fantasy' AND 
+	Trim(value) <> 'International Movies' AND 
+	Trim(value) <> 'Action & Adventure' AND 
+	Trim(value) <> 'Cult Movies'
+ORDER BY 
+	Count(*) DESC
+  
+ ```
+
+**Objective:** Identify the director's name and the number of horror and comedy movies directed.
+
+
+
+### 24. Find the Most Common Rating for Movies and TV Shows?
+
+```sql
+
+SELECT 
+	Rating, 
+	COUNT(*) AS CountRating
+FROM 
+	(
+		SELECT 
+			Rating
+		FROM 
+			Netflix_Titles_filter
+		UNION ALL 
+		SELECT 
+			Rating
+		FROM 
+			Netflix_Titles_filter
+	) AS combined
+GROUP BY 
+	Rating
+ORDER BY 
+	COUNT(*) DESC
+  
+ ```
+
+**Objective:** Identify the most common rating for contents.
+
+
+
+### 25. Find each year and the average number of content released in India, and return the top 5 years with the highest average content released?
+
+```sql
+
+SELECT
+	TOP 5 release_year, 
+	COUNT(show_id) AS total_release, 
+    ROUND(COUNT(show_id) * 1.0 / (SELECT COUNT(show_id) 
+FROM 
+	Netflix_Titles_filter 
+WHERE 
+	country = 'India') * 100, 2) AS avg_release
+FROM 
+    Netflix_Titles_filter
+WHERE 
+    country = 'India'
+GROUP BY 
+    release_year
+ORDER BY 
+    avg_release DESC
+  
+ ```
+
+**Objective:** Identify each year and the average number of content released in India.
 
 
 
