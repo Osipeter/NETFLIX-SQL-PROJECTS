@@ -1,7 +1,7 @@
 # Netflix Movies and TV Shows End-to-End Data Analysis Project using SQL
 
 
-![Netflix Logo](src="https://github.com/user-attachments/assets/18a11264-e3ae-4024-b0f6-f00df5def5b7" />)
+![Netflix Logo](https://github.com/user-attachments/assets/18a11264-e3ae-4024-b0f6-f00df5def5b7 />)
 
 
 ## Overview
